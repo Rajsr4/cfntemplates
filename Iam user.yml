@@ -1,0 +1,95 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  Password:
+    NoEcho: 'true'
+    Type: String
+    Description: New account password
+    MinLength: '1'
+    MaxLength: '41'
+    ConstraintDescription: the password must be between 1 and 41 characters
+  MyUser:
+    Type: String
+    Default: Rajesh
+  IAMProject:
+    Type: String
+    Description: Enter Name of the Project
+    Default: SCC-HPC-AWS101-Training
+  IAMManagedBy:
+    Type: String
+    Description: Enter Instance Managed By
+    Default: SCC-HPC-AWS101
+  CTXCreatedby: 
+    Type: String
+    Description: Enter the creator name of this instance
+    Default: rajesh.vyda@clovertex.com
+  TypePurposeOftheIAM:
+    Type: String
+    Description: Type the Purpose of the Instance
+    Default: To test the Fisrt Template made during AWS101 CloudFormation Training
+Resources:
+  CTXUser:
+    Type: AWS::IAM::User
+    Properties:
+      LoginProfile:
+        Password: !Ref 'Password'
+    Properties:
+      Policies:
+      - PolicyName: giveaccesstos3only
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - s3:Get*
+                - s3:list*
+              Resource: "*" 
+      Tags:
+        - Key: Createdby
+          Value: !Ref CTXCreatedby
+        - Key: Project
+          Value: !Ref IAMProject
+        - Key: ManagedBy
+          Value: !Ref IAMManagedBy
+        - Key: Purpose
+          Value: !Ref TypePurposeOftheIAM
+  AWSCTXROLE:
+    Type: AWS::IAM::Role
+    Properties: 
+      Description: Role for me
+      ManagedPolicyArns: 
+        - !Ref IAMManagedPolicy
+      MaxSessionDuration: 7200
+      AssumeRolePolicyDocument:
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - s3.amazonaws.com
+          Action: sts:AssumeRole
+      RoleName: scc-hpc-aws101-rajeshrole
+      Tags:
+        - Key: Createdby
+          Value: !Ref CTXCreatedby
+        - Key: Project
+          Value: !Ref IAMProject
+        - Key: ManagedBy
+          Value: !Ref IAMManagedBy
+        - Key: Purpose
+          Value: !Ref TypePurposeOftheIAM
+  IAMManagedPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties: 
+      Description: Managedby me
+      ManagedPolicyName: scc-hpc-aws101-Rajeshpolicy
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action: ['s3:list*' , s3:get*]
+            Resource: 'arn:aws:s3:::scc-hpc-aws101-testrajeshbukt'
+  AWSEC2InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties: 
+      InstanceProfileName: scc-hpc-aws101-Rajeshprofile
+      Roles:
+        - !Ref AWSCTXROLE

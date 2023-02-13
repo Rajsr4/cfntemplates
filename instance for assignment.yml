@@ -1,0 +1,116 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  AWS CloudFormation Template for creating an Amazon EC2 instance with two volumes and both are encrypted.
+Parameters:
+  CTXKeyName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: KeyPair to EC2 instance
+    Default: scc-hpc-aws101
+  CTXSecurityGroup:
+    Type: List<AWS::EC2::SecurityGroup::Id>
+    Description: security groups for my ec2 instance
+    Default: sg-0522bf3f7b0284526
+  CTXSubnetId: 
+    Type: AWS::EC2::Subnet::Id
+    Description: subnet in which ec2 is created
+    Default: subnet-0e5736a3a48d3811c
+  CTXInstanceType1:
+    Description: EC2 instance type
+    Type: String
+    Default: t2.medium
+    AllowedValues: 
+      - t2.micro
+      - t2.medium
+      - t3.large
+  InstanceProfile: 
+    Type: String
+    Description: Enter a profile for the InstanceProfile
+    Default: ctx-hpc-dev-profile
+  CTXAmiId: 
+    Type: AWS::EC2::Image::Id
+    Description: Enter the Image Id
+    Default: ami-035304642b0c76314
+  CTXEnv: 
+    Type: String
+    Description: Enter which environment your ec2 will be deployed
+    Default: POC
+    AllowedValues: 
+      - POC
+      - MVP
+      - PRD
+  CTXInstanceProject:
+    Type: String
+    Description: Enter Name of the Project
+    Default: SCC-HPC-AWS101-Training
+  CTXCreatedby: 
+    Type: String
+    Description: Enter the creator name of this instance
+    Default: rajesh.vyda@clovertex.com
+  CTXName1: 
+    Type: String
+    Description: Enter the name of this instance
+    Default: scc-hpc-aws101-10xgenomics-rajesh
+  InstanceProject:
+    Type: String
+    Description: Enter Name of the Project
+    Default: SCC-HPC-AWS101-Training
+  InstanceManagedBy:
+    Type: String
+    Description: Enter Instance Managed By
+    Default: SCC-HPC-AWS101
+  PurposeOftheInstance:
+    Type: String
+    Description: Type the Purpose of the Instance
+    Default: To test the HPC services
+  CTXEbssize1:
+    Type: Number
+    Description: Enter the size of the root volume
+    Default: 35
+    MinValue: 20
+    MaxValue: 40
+  CTXEbssize2:
+    Type: Number
+    Description: Enter the size of the Secondary volume
+    Default: 30
+    MinValue: 10
+    MaxValue: 40
+Resources:
+# first instance for head node
+  Linuxserver1:
+    Type: AWS::EC2::Instance
+    Properties:
+      KeyName: !Ref CTXKeyName
+      SecurityGroupIds: !Ref CTXSecurityGroup
+      SubnetId: !Ref CTXSubnetId
+      InstanceType: !Ref CTXInstanceType1
+      ImageId: !Ref CTXAmiId
+      IamInstanceProfile: !Ref InstanceProfile
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeSize: !Ref CTXEbssize1
+            Encrypted: 'True'
+            DeleteOnTermination: 'true'
+        - DeviceName: /dev/xvdb
+          Ebs:
+            VolumeSize: !Ref CTXEbssize2
+            Encrypted: 'True'
+            DeleteOnTermination: 'true'
+      Tags: 
+        - Key: "Name"
+          Value: !Ref CTXName1
+        - Key: Createdby
+          Value: !Ref CTXCreatedby
+        - Key: Project
+          Value: !Ref CTXInstanceProject
+        - Key: Environment
+          Value: !Ref CTXEnv
+        - Key: ManagedBy
+          Value: !Ref InstanceManagedBy
+        - Key: Purpose
+          Value: !Ref PurposeOftheInstance
+
+Outputs:
+    EC2InstanceId1:
+       Description: "Instance ID of EC2 created"
+       Value: !Ref Linuxserver1
