@@ -1,0 +1,141 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  AWS CloudFormation Template for creating an Amazon Container Using Fargate.
+Parameters:
+  AppName:
+    Type: String
+    Description: Name of app requiring exposure
+    Default: rajesh-app
+  ECSTaskRoleArn:
+    Type: String
+    Default: 'arn:aws:iam::658907380213:role/ECSAccessRole'
+    Description: ECS Task role.
+  ECSTaskExecutionRoleArn:
+    Type: String
+    Default: 'arn:aws:iam::658907380213:role/ECSAccessRole'
+    Description: ECS Task execution role
+  Servicename:
+    Type: String
+    Default: ecsservicenme
+  CTXSecurityGroup:
+    Description: security groups for my ECS
+    Type: AWS::EC2::SecurityGroup::Id
+    Default: sg-0522bf3f7b0284526
+  CTXVPC:
+    Description: VPC for ECS
+    Type: AWS::EC2::VPC::Id
+    Default: vpc-02bba2898ec3b07af
+  CTXSubnetId: 
+    Type: AWS::EC2::Subnet::Id
+    Description: subnet in which ECS is created
+    Default: subnet-0e5736a3a48d3811c
+  DesiredCapacity:
+    Type: Number
+    Default: '2'
+    Description: Number of instances to launch in your ECS cluster.
+  CTXEnv: 
+    Type: String
+    Description: Enter which environment your ECS will be deployed
+    Default: POC
+    AllowedValues: 
+      - POC
+      - MVP
+      - PRD
+  CTXECSProject:
+    Type: String
+    Description: Enter Name of the Project
+    Default: SCC-HPC-AWS101-Training
+  CTXCreatedby: 
+    Type: String
+    Description: Enter the creator name of this ECS
+    Default: rajesh.vyda@clovertex.com
+  CTXTaskDef:
+    Type: String
+    Default: ECSTaskdefinition
+  CTXECSManagedBy:
+    Type: String
+    Description: Enter ECS Managed By
+    Default: SCC-HPC-AWS101
+  TypePurposeOftheECS:
+    Type: String
+    Description: Type the Purpose of the efs
+    Default: To test the Fisrt ECS Template made during AWS101 CloudFormation Training
+Resources:
+  ECSCluster:
+    Type: 'AWS::ECS::Cluster'
+    Properties:
+      ClusterName: MyECSFargateCluster
+  ECSTaskDefiniton:
+    Type: AWS::ECS::TaskDefinition
+    Properties: 
+      ContainerDefinitions: 
+        - Name: !Ref AppName
+          Essential: 'true'
+          Image: 'httpd:2.4' 
+          Command: 
+            - >-
+              /bin/sh -c "echo '<html> <head> <title>Amazon ECS Sample App</title> <style>body {margin-top: 40px; background-color: #333;} </style> </head><body> <div style=color:white;text-align:center> <h1>Amazon ECS Sample App</h1> <h2>Congratulations!</h2> <p>Your application is now running on a container in Amazon ECS.</p> </div></body></html>' >  /usr/local/apache2/htdocs/index.html && httpd-foreground"
+          EntryPoint: 
+            - sh
+            - '-c'
+          MountPoints: 
+            - ContainerPath: /usr/local/apache2/htdocs
+              SourceVolume: rajesh-volume
+          PortMappings: 
+            - ContainerPort: 80
+      Cpu: 256
+      Memory: 0.5GB
+      Family: !Join ['', [!Ref Servicename, ECSTaskDefiniton]]
+      TaskRoleArn: !Ref ECSTaskRoleArn
+      ExecutionRoleArn: !Ref ECSTaskExecutionRoleArn
+      NetworkMode: awsvpc
+      RequiresCompatibilities: 
+        - FARGATE
+      Tags: 
+        - Key: Name
+          Value: !Ref CTXTaskDef
+        - Key: Createdby
+          Value: !Ref CTXCreatedby
+        - Key: Project
+          Value: !Ref CTXECSProject
+        - Key: Environment
+          Value: !Ref CTXEnv
+        - Key: ManagedBy
+          Value: !Ref CTXECSManagedBy
+        - Key: Purpose
+          Value: !Ref TypePurposeOftheECS
+      Volumes:
+        - Name: rajesh-volume
+  ECSService:
+    Type: AWS::ECS::Service
+    DependsOn: ECSTaskDefiniton
+    Properties:
+      Cluster: !Ref ECSCluster
+      TaskDefinition: !Ref ECSTaskDefiniton
+      LaunchType: FARGATE
+      DeploymentConfiguration:
+        MinimumHealthyPercent: 100
+        MaximumPercent: 200
+      ServiceName: !Ref Servicename
+      DesiredCount: !Ref DesiredCapacity
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          SecurityGroups:
+            - !Ref CTXSecurityGroup
+          Subnets:
+            - !Ref CTXSubnetId
+          AssignPublicIp: ENABLED
+
+  ECSCluster:
+    Type: 'AWS::ECS::Cluster'
+    Properties:
+      ClusterName: MyECSFargateCluster
+Outputs:
+  EcsService:
+    Value: !Ref ECSService
+  EcsCluster:
+    Value: !Ref ECSCluster
+  TaskDef:
+    Value: !Ref ECSTaskDefiniton
+
+  
