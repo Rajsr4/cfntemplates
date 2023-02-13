@@ -1,0 +1,60 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: CloudFormation Template for S3 bucket
+
+Parameters:
+  IAMProject:
+    Type: String
+    Description: Enter Name of the Project
+    Default: SCC-HPC-AWS101-Training
+  IAMManagedBy:
+    Type: String
+    Description: Enter Instance Managed By
+    Default: SCC-HPC-AWS101
+  CTXCreatedby: 
+    Type: String
+    Description: Enter the creator name of this instance
+    Default: rajesh.vyda@clovertex.com
+  TypePurposeOftheIAM:
+    Type: String
+    Description: Type the Purpose of the Instance
+    Default: To test the Fisrt Template made during AWS101 CloudFormation Training
+Resources:
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    Description: create a s3 bucket
+    Properties:
+      BucketName: scc-hpc-aws101-testrajeshbukt
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      Tags:
+        - Key: Createdby
+          Value: !Ref CTXCreatedby
+        - Key: Project
+          Value: !Ref IAMProject
+        - Key: ManagedBy
+          Value: !Ref IAMManagedBy
+        - Key: Purpose
+          Value: !Ref TypePurposeOftheIAM
+  S3BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref S3Bucket
+      PolicyDocument:
+        Id: Policy1669961701137
+        Version: '2012-10-17'
+        Statement:
+          - Sid: Stmt1669961691302
+            Action:
+              - 's3:Get*'
+              - 's3:ListBucket'
+            Effect: Allow
+            Resource: !Sub 'arn:aws:s3:::${S3Bucket}'
+            Principal:
+              "AWS" : 'arn:aws:iam::658907380213:user/scc-hpc-aws101-IAMRajesh-CTXUser-1FEL21AO5ANLE'
+Outputs:
+  S3Bucket:
+    Description: create a bucket
+    Value: !Ref S3Bucket
